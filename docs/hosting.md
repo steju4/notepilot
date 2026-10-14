@@ -1,3 +1,9 @@
+# Online-Betrieb
+
+Für den vorhandenen Homeserver mit Docker, nginx Proxy Manager und Cloudflare Tunnel liegt eine vollständige [Schritt-für-Schritt-Anleitung](../deploy/README.md) mit vorgeschaltetem Access-Login und Token-Prüfung vor. Besucher benötigen nur den Browser. Der Betreiber führt die Einrichtung selbst durch; es wurde kein Homeserver-Zugriff verbunden und noch kein öffentlicher Link geprüft.
+
+Das Homeserver-Profil liefert HOMR-Modelle im Image mit, hält die Bibliothek in einem dauerhaften Volume, veröffentlicht keine Host-Ports und deaktiviert Offline-Caches der Weboberfläche. Alle freigegebenen Nutzer teilen eine Bibliothek; es gibt keine Benutzertrennung in NotePilot.
+
 # Direkt im Browser testen: Hosting-Voraussetzungen
 
 NotePilot benötigt für Foto-/PDF-Erkennung einen laufenden Python-Prozess mit HOMR. Eine ausschließlich statische Veröffentlichung der Oberfläche ersetzt diesen Prozess nicht. In der aktuellen Codex-Sitzung ist keine Veröffentlichungsschnittstelle für ChatGPT Sites und kein Hosting-Konto verbunden. Es wurde noch kein öffentlicher Testlink erzeugt.

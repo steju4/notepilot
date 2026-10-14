@@ -79,7 +79,7 @@ function App() {
     [instruments, setInstruments] = useState<Instrument[]>([]),
     [engine, setEngine] = useState<Engine>(),
     [online, setOnline] = useState(true),
-    [hosted, setHosted] = useState(false),
+    [hosted, setHosted] = useState(import.meta.env.VITE_NOTEPILOT_HOSTED === "1"),
     [importOpen, setImportOpen] = useState(false),
     [error, setError] = useState(""),
     [query, setQuery] = useState(""),
@@ -323,6 +323,11 @@ function App() {
                   : "Meine Noten"}
           </div>
           <div className="button-row">
+            {import.meta.env.VITE_NOTEPILOT_HOSTED === "1" && (
+              <a className="secondary small" href="/cdn-cgi/access/logout">
+                Abmelden
+              </a>
+            )}
             <button
               className="icon-button"
               aria-label={dark ? "Helles Design" : "Dunkles Design"}
@@ -348,8 +353,8 @@ function App() {
                 <strong>Online-Testversion</strong>
                 <p>
                   Noten und Uploads werden auf diesem Testserver verarbeitet und gespeichert. Der
-                  Browser führt HOMR nicht selbst aus. Sichere wichtige Ergebnisse per Export;
-                  Testdaten können bei einem Serverneustart verloren gehen.
+                  Browser führt HOMR nicht selbst aus. Die Bibliothek liegt im dauerhaften
+                  Datenvolume. Sichere wichtige Ergebnisse zusätzlich per Export.
                 </p>
               </div>
             </div>
@@ -358,10 +363,15 @@ function App() {
             <div className="notice warning">
               <WifiOff size={22} />
               <div>
-                <strong>Der lokale Server ist nicht erreichbar.</strong>
+                <strong>
+                  {hosted
+                    ? "Server nicht erreichbar oder Anmeldung abgelaufen."
+                    : "Der lokale Server ist nicht erreichbar."}
+                </strong>
                 <p>
-                  Bereits geöffnete digitale Stücke sind aus dem Browsercache verfügbar. Erkennung
-                  und Speichern benötigen den laufenden Computer.
+                  {hosted
+                    ? "Lade die Seite neu, um dich erneut anzumelden. Die geschützte Online-Version speichert keine Offline-Partituren im Browser."
+                    : "Bereits geöffnete digitale Stücke sind aus dem Browsercache verfügbar. Erkennung und Speichern benötigen den laufenden Computer."}
                 </p>
               </div>
               <button

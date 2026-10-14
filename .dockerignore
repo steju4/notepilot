@@ -8,3 +8,8 @@ frontend/test-results
 frontend/playwright-report
 **/__pycache__
 **/*.egg-info
+.env
+deploy/.env
+backend/tests
+examples
+docs

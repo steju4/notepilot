@@ -5,6 +5,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      disable: process.env.VITE_NOTEPILOT_HOSTED === "1",
       registerType: "prompt",
       includeAssets: ["icon.svg"],
       manifest: {
@@ -29,9 +30,7 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api\//],
-        runtimeCaching: [
-          { urlPattern: /\/api\/v1\/.*$/, handler: "NetworkOnly" },
-        ],
+        runtimeCaching: [{ urlPattern: /\/api\/v1\/.*$/, handler: "NetworkOnly" }],
       },
     }),
   ],

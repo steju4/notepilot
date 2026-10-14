@@ -1,0 +1,47 @@
+# Start only this project; the existing tunnel and reverse proxy remain in place.
+name: notepilot
+services:
+  notepilot:
+    image: notepilot-homeserver:local
+    build:
+      context: ..
+      args:
+        NOTEPILOT_INCLUDE_MODELS: "1"
+        VITE_NOTEPILOT_HOSTED: "1"
+    environment:
+      NOTEPILOT_DATA_DIR: /data
+      NOTEPILOT_REQUIRE_MODELS: "1"
+      NOTEPILOT_HOSTED_PREVIEW: "1"
+      NOTEPILOT_ALLOWED_HOSTS: ${NOTEPILOT_DOMAIN:?Domain in deploy/.env eintragen}
+      NOTEPILOT_ACCESS_TEAM_DOMAIN: ${NOTEPILOT_ACCESS_TEAM_DOMAIN:?Access-Team in deploy/.env eintragen}
+      NOTEPILOT_ACCESS_AUD: ${NOTEPILOT_ACCESS_AUD:?Access-Application-AUD in deploy/.env eintragen}
+      NOTEPILOT_ACCESS_EMAILS: ${NOTEPILOT_ACCESS_EMAILS:?Erlaubte E-Mail in deploy/.env eintragen}
+      NOTEPILOT_MAX_UPLOAD_MB: "40"
+      NOTEPILOT_OMR_TIMEOUT: "900"
+    volumes:
+      - notepilot-data:/data
+    networks:
+      proxy:
+        aliases: [notepilot]
+    expose: ["8000"]
+    # No host port: NPM reaches the application through the shared Docker network.
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 20s
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 256
+    cpus: ${NOTEPILOT_CPUS:-4}
+    mem_limit: ${NOTEPILOT_MEMORY:-4g}
+    healthcheck:
+      test: [CMD, /app/.venv/bin/python, /app/scripts/container_health.py]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+volumes:
+  notepilot-data:
+networks:
+  proxy:
+    external: true
+    name: ${NOTEPILOT_PROXY_NETWORK:?Vorhandenes NPM-Docker-Netzwerk eintragen}

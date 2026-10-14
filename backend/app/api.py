@@ -12,9 +12,11 @@ from fastapi import FastAPI, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
+from jwt import PyJWTError
 from pydantic import BaseModel, ConfigDict, Field
+from starlette.concurrency import run_in_threadpool
 
-from . import db
+from . import access, db
 from .core import ALLOWED_HOSTS, DATA, HOSTED_PREVIEW, MAX_UPLOAD, ROOT, local_path
 from .services import omr
 from .services.images import decode_pages, process_image, quality
@@ -51,6 +53,15 @@ async def local_access(request: Request, call_next):
             allowed_host = False
     if not allowed_host:
         return Response("Unzulässiger Hostname.", status_code=403)
+    if access.GATE:
+        try:
+            await run_in_threadpool(access.GATE.verify, request.headers.get("cf-access-jwt-assertion", ""))
+        except (PyJWTError, OSError):
+            return Response(
+                "Cloudflare-Access-Anmeldung erforderlich.",
+                status_code=403,
+                headers={"Cache-Control": "no-store"},
+            )
     if request.method not in ("GET", "HEAD", "OPTIONS"):
         origin = request.headers.get("origin")
         if origin:
@@ -70,6 +81,8 @@ async def local_access(request: Request, call_next):
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Referrer-Policy"] = "same-origin"
+    if access.GATE:
+        response.headers["Cache-Control"] = "no-store"
     return response
 
 

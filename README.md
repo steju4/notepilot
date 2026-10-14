@@ -97,7 +97,9 @@ Musikdateien und Einstellungen werden nicht an externe Dienste übertragen. Mode
 docker compose up --build
 ```
 
-Ein lokales Volume hält Datenbank, Dokumente, Modelle und Cache. Die veröffentlichte Portbindung bleibt `127.0.0.1:8000`. Nach dem Start unter Einstellungen das KI-Modell einrichten. Dockerfile/Compose sind bereitgestellt und Compose-Syntax wurde geprüft; **Containerbuild und Containerbetrieb wurden in dieser Sitzung nicht ausgeführt**. Für LAN-Portbindung die Compose-Datei ausdrücklich anpassen und Firewall/HTTPS beachten.
+Ein lokales Volume hält Datenbank, Dokumente, Modelle und Cache. Die lokale Portbindung bleibt `127.0.0.1:8000`. Nach dem Start unter Einstellungen das KI-Modell einrichten. Das Container-Image wurde unter Linux x86_64 gebaut und mit echter CPU-Erkennung, SQLite und einem Neustart praktisch geprüft.
+
+Für deinen **Homeserver mit Cloudflare Tunnel und nginx Proxy Manager** gibt es ein eigenes Profil mit vorinstallierten Modellen, dauerhaftem Datenvolume und Cloudflare-Access-Login. Es veröffentlicht keinen Host-Port und prüft Access-Tokens auch in der Anwendung. Die Online-Version nutzt keinen Offline-Partiturcache. **[Vollständige Einrichtung mit SSH-Befehlen](deploy/README.md)** · [Konfigurationsvorlage](deploy/.env.example).
 
 ## Architektur und Lizenzen
 
