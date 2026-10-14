@@ -13,3 +13,5 @@ deploy/.env
 backend/tests
 examples
 docs
+**/secrets
+**/basic-auth.json

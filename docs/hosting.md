@@ -1,6 +1,6 @@
 # Online-Betrieb
 
-Für den vorhandenen Homeserver mit Docker, nginx Proxy Manager und Cloudflare Tunnel liegt eine vollständige [Schritt-für-Schritt-Anleitung](../deploy/README.md) mit vorgeschaltetem Access-Login und Token-Prüfung vor. Besucher benötigen nur den Browser. Der Betreiber führt die Einrichtung selbst durch; es wurde kein Homeserver-Zugriff verbunden und noch kein öffentlicher Link geprüft.
+Für den vorhandenen Homeserver mit Docker, nginx Proxy Manager und Cloudflare Tunnel liegt eine vollständige [Schritt-für-Schritt-Anleitung](../deploy/README.md) mit HTTP Basic Auth im Backend und dem normalen Browserdialog für Benutzername/Passwort vor. Besucher benötigen nur den Browser. Der Betreiber führt die Einrichtung selbst durch; es wurde kein Homeserver-Zugriff verbunden und noch kein öffentlicher Link geprüft.
 
 Das Homeserver-Profil liefert HOMR-Modelle im Image mit, hält die Bibliothek in einem dauerhaften Volume, veröffentlicht keine Host-Ports und deaktiviert Offline-Caches der Weboberfläche. Alle freigegebenen Nutzer teilen eine Bibliothek; es gibt keine Benutzertrennung in NotePilot.
 
@@ -10,12 +10,16 @@ NotePilot benötigt für Foto-/PDF-Erkennung einen laufenden Python-Prozess mit 
 
 ## Vorbereitung der Anwendung
 
-Für eine gehostete Instanz sind zwei explizite Variablen vorgesehen:
+Das geprüfte Homeserver-Profil setzt zusätzlich zur Host-Freigabe verpflichtende Authentifizierung:
 
 ```sh
 NOTEPILOT_HOSTED_PREVIEW=1
 NOTEPILOT_ALLOWED_HOSTS=der-exakte-hostname.example
+NOTEPILOT_REQUIRE_AUTH=1
+NOTEPILOT_BASIC_AUTH_FILE=/run/secrets/notepilot_basic_auth
 ```
+
+Die Secret-Datei wird nur zur Laufzeit schreibgeschützt gemountet und enthält Benutzername plus scrypt-Passwort-Hash. Erstellung und Dateirechte stehen in der Deployment-Anleitung. Der Frontend-Build verwendet `VITE_NOTEPILOT_HOSTED=1`, um Offline-Caches zu deaktivieren. Es gibt keine zuverlässige Basic-Auth-Abmeldefunktion im Browser.
 
 Der Hostname wird zusätzlich zu den bestehenden lokalen Hosts erlaubt; es gibt keine pauschale Wildcard-Freigabe. Fremde Website-Origin-Anfragen bleiben abgelehnt. Die Online-Instanz kennzeichnet in Oberfläche und Upload, dass Noten auf dem Testserver verarbeitet und gespeichert werden. Die lokale Anwendung behält ihre bisherigen privaten Standardeinstellungen.
 

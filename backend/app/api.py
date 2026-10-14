@@ -12,7 +12,6 @@ from fastapi import FastAPI, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
-from jwt import PyJWTError
 from pydantic import BaseModel, ConfigDict, Field
 from starlette.concurrency import run_in_threadpool
 
@@ -53,15 +52,6 @@ async def local_access(request: Request, call_next):
             allowed_host = False
     if not allowed_host:
         return Response("Unzulässiger Hostname.", status_code=403)
-    if access.GATE:
-        try:
-            await run_in_threadpool(access.GATE.verify, request.headers.get("cf-access-jwt-assertion", ""))
-        except (PyJWTError, OSError):
-            return Response(
-                "Cloudflare-Access-Anmeldung erforderlich.",
-                status_code=403,
-                headers={"Cache-Control": "no-store"},
-            )
     if request.method not in ("GET", "HEAD", "OPTIONS"):
         origin = request.headers.get("origin")
         if origin:
@@ -81,6 +71,24 @@ async def local_access(request: Request, call_next):
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Referrer-Policy"] = "same-origin"
+    return response
+
+
+@app.middleware("http")
+async def basic_access(request: Request, call_next):
+    # Outermost middleware: challenge every route before serving or validating it.
+    if access.GATE:
+        if not await run_in_threadpool(access.GATE.verify, request.headers.get("authorization", "")):
+            return Response(
+                "Anmeldung erforderlich.",
+                status_code=401,
+                headers={
+                    "WWW-Authenticate": access.CHALLENGE,
+                    "Cache-Control": "no-store",
+                    "X-Content-Type-Options": "nosniff",
+                },
+            )
+    response = await call_next(request)
     if access.GATE:
         response.headers["Cache-Control"] = "no-store"
     return response

@@ -323,11 +323,6 @@ function App() {
                   : "Meine Noten"}
           </div>
           <div className="button-row">
-            {import.meta.env.VITE_NOTEPILOT_HOSTED === "1" && (
-              <a className="secondary small" href="/cdn-cgi/access/logout">
-                Abmelden
-              </a>
-            )}
             <button
               className="icon-button"
               aria-label={dark ? "Helles Design" : "Dunkles Design"}
@@ -365,7 +360,7 @@ function App() {
               <div>
                 <strong>
                   {hosted
-                    ? "Server nicht erreichbar oder Anmeldung abgelaufen."
+                    ? "Server nicht erreichbar oder Zugangsdaten erforderlich."
                     : "Der lokale Server ist nicht erreichbar."}
                 </strong>
                 <p>

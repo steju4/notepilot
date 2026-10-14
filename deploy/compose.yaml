@@ -13,13 +13,14 @@ services:
       NOTEPILOT_REQUIRE_MODELS: "1"
       NOTEPILOT_HOSTED_PREVIEW: "1"
       NOTEPILOT_ALLOWED_HOSTS: ${NOTEPILOT_DOMAIN:?Domain in deploy/.env eintragen}
-      NOTEPILOT_ACCESS_TEAM_DOMAIN: ${NOTEPILOT_ACCESS_TEAM_DOMAIN:?Access-Team in deploy/.env eintragen}
-      NOTEPILOT_ACCESS_AUD: ${NOTEPILOT_ACCESS_AUD:?Access-Application-AUD in deploy/.env eintragen}
-      NOTEPILOT_ACCESS_EMAILS: ${NOTEPILOT_ACCESS_EMAILS:?Erlaubte E-Mail in deploy/.env eintragen}
+      NOTEPILOT_REQUIRE_AUTH: "1"
+      NOTEPILOT_BASIC_AUTH_FILE: /run/secrets/notepilot_basic_auth
       NOTEPILOT_MAX_UPLOAD_MB: "40"
       NOTEPILOT_OMR_TIMEOUT: "900"
     volumes:
       - notepilot-data:/data
+    secrets:
+      - notepilot_basic_auth
     networks:
       proxy:
         aliases: [notepilot]
@@ -31,7 +32,7 @@ services:
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
     pids_limit: 256
-    cpus: ${NOTEPILOT_CPUS:-4}
+    cpus: ${NOTEPILOT_CPUS:-2}
     mem_limit: ${NOTEPILOT_MEMORY:-4g}
     healthcheck:
       test: [CMD, /app/.venv/bin/python, /app/scripts/container_health.py]
@@ -41,6 +42,9 @@ services:
       start_period: 60s
 volumes:
   notepilot-data:
+secrets:
+  notepilot_basic_auth:
+    file: ${NOTEPILOT_AUTH_SECRET_FILE:?Pfad zur Basic-Auth-Secret-Datei eintragen}
 networks:
   proxy:
     external: true

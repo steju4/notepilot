@@ -1,4 +1,4 @@
-"""Local paths and settings. No remote storage or credentials."""
+"""Storage paths and local/hosted runtime settings."""
 
 import os
 from pathlib import Path

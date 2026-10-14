@@ -71,19 +71,19 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
     }
     throw new Error(
       hosted
-        ? "Server nicht erreichbar oder Anmeldung abgelaufen. Bitte die Seite neu laden und erneut anmelden."
+        ? "Server nicht erreichbar oder Zugangsdaten erforderlich. Bitte die Seite neu laden."
         : "Der lokale NotePilot-Server ist nicht erreichbar. Starte ihn auf deinem Computer. Bereits geöffnete Stücke kannst du offline abspielen.",
     );
   }
   window.dispatchEvent(new CustomEvent("backend-status", { detail: true }));
   if (
     hosted &&
-    (response.status === 403 ||
+    (response.status === 401 ||
       response.redirected ||
       response.headers.get("content-type")?.includes("text/html"))
   ) {
     throw new Error(
-      "Anmeldung erforderlich. Bitte die Seite neu laden und bei Cloudflare Access anmelden.",
+      "Anmeldung erforderlich. Bitte die Seite neu laden und Benutzername und Passwort im Browserdialog eingeben.",
     );
   }
   if (!response.ok) {

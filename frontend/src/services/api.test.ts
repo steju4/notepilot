@@ -30,10 +30,10 @@ describe("private hosted instance", () => {
     expect(await cacheGet("score")).toBeUndefined();
     expect(indexedDB.open).not.toHaveBeenCalled();
   });
-  it("asks for login after an expired Access session", async () => {
+  it("asks for the browser login after a Basic Auth challenge", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => new Response("login", { status: 403 })),
+      vi.fn(async () => new Response("login", { status: 401 })),
     );
     const { api } = await import("./api");
     await expect(api("/pieces")).rejects.toThrow("Anmeldung erforderlich");
@@ -42,7 +42,7 @@ describe("private hosted instance", () => {
   it("never falls back to cached MusicXML after denied access", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => new Response("denied", { status: 403 })),
+      vi.fn(async () => new Response("denied", { status: 401 })),
     );
     const { scoreXml } = await import("./api");
     await expect(scoreXml("private-id")).rejects.toThrow("erneut anmelden");
@@ -56,7 +56,7 @@ describe("private hosted instance", () => {
       }),
     );
     const { api, scoreXml } = await import("./api");
-    await expect(api("/pieces")).rejects.toThrow("Anmeldung abgelaufen");
+    await expect(api("/pieces")).rejects.toThrow("Zugangsdaten erforderlich");
     await expect(scoreXml("private-id")).rejects.toThrow("konnte nicht geladen");
     expect(indexedDB.open).not.toHaveBeenCalled();
   });

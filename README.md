@@ -99,7 +99,7 @@ docker compose up --build
 
 Ein lokales Volume hält Datenbank, Dokumente, Modelle und Cache. Die lokale Portbindung bleibt `127.0.0.1:8000`. Nach dem Start unter Einstellungen das KI-Modell einrichten. Das Container-Image wurde unter Linux x86_64 gebaut und mit echter CPU-Erkennung, SQLite und einem Neustart praktisch geprüft.
 
-Für deinen **Homeserver mit Cloudflare Tunnel und nginx Proxy Manager** gibt es ein eigenes Profil mit vorinstallierten Modellen, dauerhaftem Datenvolume und Cloudflare-Access-Login. Es veröffentlicht keinen Host-Port und prüft Access-Tokens auch in der Anwendung. Die Online-Version nutzt keinen Offline-Partiturcache. **[Vollständige Einrichtung mit SSH-Befehlen](deploy/README.md)** · [Konfigurationsvorlage](deploy/.env.example).
+Für deinen **Homeserver mit Cloudflare Tunnel und nginx Proxy Manager** gibt es ein eigenes Profil mit vorinstallierten Modellen, dauerhaftem Datenvolume und HTTP-Basic-Auth im Backend. Es veröffentlicht keinen Host-Port und prüft Benutzername und scrypt-Passwort-Hash aus einer gemounteten Secret-Datei. Die Online-Version nutzt keinen Offline-Partiturcache. **[Vollständige Einrichtung mit SSH-Befehlen](deploy/README.md)** · [Konfigurationsvorlage](deploy/.env.example).
 
 ## Architektur und Lizenzen
 
