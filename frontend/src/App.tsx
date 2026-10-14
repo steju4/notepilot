@@ -79,6 +79,7 @@ function App() {
     [instruments, setInstruments] = useState<Instrument[]>([]),
     [engine, setEngine] = useState<Engine>(),
     [online, setOnline] = useState(true),
+    [hosted, setHosted] = useState(false),
     [importOpen, setImportOpen] = useState(false),
     [error, setError] = useState(""),
     [query, setQuery] = useState(""),
@@ -108,6 +109,9 @@ function App() {
     const status = (event: Event) => setOnline((event as CustomEvent<boolean>).detail);
     window.addEventListener("backend-status", status);
     loadLibrary();
+    void api<{ hosted_preview: boolean }>("/runtime")
+      .then((value) => setHosted(value.hosted_preview))
+      .catch(() => {});
     void api<Instrument[]>("/instruments")
       .then(setInstruments)
       .catch(() => {});
@@ -289,11 +293,11 @@ function App() {
         <div className="sidebar-bottom">
           <div className="privacy-note">
             <ShieldCheck size={23} />
-            <strong>Deine Musik bleibt bei dir.</strong>
+            <strong>{hosted ? "Online-Testversion" : "Deine Musik bleibt bei dir."}</strong>
             <p>
               Keine Anmeldung.
               <br />
-              Keine Cloud. Einfach üben.
+              {hosted ? "Verarbeitung auf dem Testserver." : "Keine Cloud. Einfach üben."}
             </p>
           </div>
           <div className="engine-indicator">
@@ -337,6 +341,19 @@ function App() {
           </div>
         </header>
         <main>
+          {hosted && (
+            <div className="notice">
+              <ShieldCheck size={22} />
+              <div>
+                <strong>Online-Testversion</strong>
+                <p>
+                  Noten und Uploads werden auf diesem Testserver verarbeitet und gespeichert. Der
+                  Browser führt HOMR nicht selbst aus. Sichere wichtige Ergebnisse per Export;
+                  Testdaten können bei einem Serverneustart verloren gehen.
+                </p>
+              </div>
+            </div>
+          )}
           {!online && (
             <div className="notice warning">
               <WifiOff size={22} />
@@ -360,6 +377,7 @@ function App() {
           )}
           {currentPiece ? (
             <Workspace
+              hosted={hosted}
               key={currentPiece}
               id={currentPiece}
               instruments={instruments}
@@ -524,7 +542,9 @@ function App() {
                       </div>
                       <div className="hero-trust">
                         <ShieldCheck size={16} />
-                        Lokal. Privat. Ohne laufende Kosten.
+                        {hosted
+                          ? "Direkt im Browser ausprobieren."
+                          : "Lokal. Privat. Ohne laufende Kosten."}
                       </div>
                     </div>
                     <ScoreArtwork />
@@ -670,7 +690,7 @@ function App() {
                 <span>Für die Freude am Musikmachen.</span>
                 <span>
                   <ShieldCheck size={15} />
-                  Deine Daten bleiben lokal.
+                  {hosted ? "Testdaten liegen auf dem Testserver." : "Deine Daten bleiben lokal."}
                 </span>
               </footer>
             </>
@@ -679,6 +699,7 @@ function App() {
       </div>
       {importOpen && (
         <ImportDialog
+          hosted={hosted}
           onClose={() => setImportOpen(false)}
           onError={notify}
           onImported={(id) => {

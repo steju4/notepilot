@@ -15,7 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
 from . import db
-from .core import DATA, MAX_UPLOAD, ROOT, local_path
+from .core import ALLOWED_HOSTS, DATA, HOSTED_PREVIEW, MAX_UPLOAD, ROOT, local_path
 from .services import omr
 from .services.images import decode_pages, process_image, quality
 from .services.instruments import INSTRUMENTS
@@ -42,7 +42,7 @@ app.add_middleware(
 @app.middleware("http")
 async def local_access(request: Request, call_next):
     host = request.url.hostname or ""
-    allowed_host = host in ("localhost", "127.0.0.1", "::1", "testserver")
+    allowed_host = host in ("localhost", "127.0.0.1", "::1", "testserver") or host.lower() in ALLOWED_HOSTS
     if not allowed_host:
         try:
             ip = ipaddress.ip_address(host)
@@ -151,6 +151,11 @@ def job_row(job):
     if job:
         job["details"] = json.loads(job["details"])
     return job
+
+
+@app.get("/api/v1/runtime")
+def runtime():
+    return {"hosted_preview": HOSTED_PREVIEW, "storage_location": "testserver" if HOSTED_PREVIEW else "local"}
 
 
 @app.get("/api/v1/health")

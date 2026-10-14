@@ -27,3 +27,9 @@ def local_path(relative: str) -> Path:
     if not path.is_relative_to(DATA):
         raise ValueError("Ungültiger Dateipfad.")
     return path
+
+
+HOSTED_PREVIEW = os.environ.get("NOTEPILOT_HOSTED_PREVIEW") == "1"
+ALLOWED_HOSTS = frozenset(
+    host.strip().lower() for host in os.environ.get("NOTEPILOT_ALLOWED_HOSTS", "").split(",") if host.strip()
+)

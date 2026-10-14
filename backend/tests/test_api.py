@@ -206,3 +206,30 @@ def test_duplicate_preserves_originals_and_practice(client):
     assert client.get(f"/api/v1/pieces/{target}/practice-sections").json()[0]["name"] == "Solo"
     client.delete(f"/api/v1/pieces/{identity}")
     assert client.get(f"/api/v1/pieces/{target}/score").status_code == 200
+
+
+def test_hosted_preview_requires_explicit_domain(client, monkeypatch):
+    assert client.get("/api/v1/runtime").json()["storage_location"] == "local"
+    assert client.get("/api/v1/health", headers={"Host": "preview.example"}).status_code == 403
+    monkeypatch.setattr(module, "ALLOWED_HOSTS", frozenset({"preview.example"}))
+    monkeypatch.setattr(module, "HOSTED_PREVIEW", True)
+    assert client.get("/api/v1/runtime", headers={"Host": "preview.example"}).json() == {
+        "hosted_preview": True,
+        "storage_location": "testserver",
+    }
+    assert (
+        client.post(
+            "/api/v1/pieces",
+            json={"title": "Online test"},
+            headers={"Host": "preview.example", "Origin": "https://preview.example"},
+        ).status_code
+        == 201
+    )
+    assert (
+        client.post(
+            "/api/v1/pieces",
+            json={"title": "Wrong origin"},
+            headers={"Host": "preview.example", "Origin": "https://evil.example"},
+        ).status_code
+        == 403
+    )

@@ -3,10 +3,12 @@ import { Camera, FileUp, Music2, X, ArrowUp, ArrowDown, Trash2, LoaderCircle } f
 import { api, post } from "../services/api";
 import type { Piece, Detail } from "../types";
 export function ImportDialog({
+  hosted = false,
   onClose,
   onImported,
   onError,
 }: {
+  hosted?: boolean;
   onClose: () => void;
   onImported: (id: string) => void;
   onError: (message: string) => void;
@@ -60,7 +62,10 @@ export function ImportDialog({
         <span className="eyebrow">DEINE MUSIK. DEIN TEMPO.</span>
         <h2 id="import-title">Neue Noten hinzufügen</h2>
         <p>
-          Ein Foto, ein PDF oder eine digitale Partitur. Deine Dateien bleiben auf deinem Computer.
+          Ein Foto, ein PDF oder eine digitale Partitur.{" "}
+          {hosted
+            ? "Deine Dateien werden auf den Testserver hochgeladen."
+            : "Deine Dateien bleiben auf deinem Computer."}
         </p>
         <div
           className="dropzone"

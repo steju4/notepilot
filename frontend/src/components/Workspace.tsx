@@ -52,6 +52,7 @@ const emptyPosition: Position = {
 const time = (seconds: number) =>
   `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
 export function Workspace({
+  hosted = false,
   id,
   instruments,
   online,
@@ -59,6 +60,7 @@ export function Workspace({
   onError,
   onLibraryChange,
 }: {
+  hosted?: boolean;
   id: string;
   instruments: Instrument[];
   online: boolean;
@@ -358,7 +360,7 @@ export function Workspace({
         </div>
         <div className="badge">
           <span className="status-dot" />
-          Lokal gespeichert
+          {hosted ? "Auf dem Testserver gespeichert" : "Lokal gespeichert"}
         </div>
       </div>
       {job && (
