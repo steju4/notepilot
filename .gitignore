@@ -1,0 +1,15 @@
+.venv/
+.omr-venv/
+node_modules/
+dist/
+data/
+__pycache__/
+.pytest_cache/
+.coverage
+*.pyc
+.env
+playwright-report/
+test-results/
+*.egg-info/
+.ruff_cache/
+*.tsbuildinfo

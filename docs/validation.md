@@ -1,0 +1,45 @@
+# Prüfbericht
+
+Getestete Umgebung: Linux x86_64, Python 3.12.14, Node 24.19.0, npm 11.9.0, Chromium; 14. Oktober 2026. Die Cloud dient der Entwicklung. Die fertige Anwendung braucht lokal keinen Cloud-Dienst.
+
+## Tatsächlich ausgeführte Prüfungen
+
+- Python-Installation nach SHA-256-Requirements, Node `npm ci`, Produktionsbuild und wiederholbare lokale Modellinstallation mit `scripts/install.py --omr --dev`.
+- **48 Backend-Tests bestanden.** Backend-Tests: SQLite-Bibliothek, Import, Versionshistorie, konkurrierende Korrektur mit veralteter Version, Speichern, MusicXML/MIDI, Bildbearbeitung, zweitseitiges PDF, MXL, Duplikate einschließlich Originale/Passagen, Backup/Wiederherstellung und fremde Origin/Host-Anfragen.
+- Musikreferenzen: C-/G-/F-Dur, lokale Kreuze/Bes/Naturals, oktavspezifische Vorzeichenwirkung und Rücksetzung, Punktierung/Achtel/Sechzehntel, Pausen/Taktpausen, 3/4 und 6/8, Triolen, Tie/Slur, Wiederholung und erste/zweite Endung, Mehrseitigkeit, Schlüssel-/Tonartwechsel, Stimmen/Akkorde und MIDI. Festgelegte Instrumenttranspositionen und Vermeidung doppelter MusicXML-Transposition.
+- **6 Zeitachsen-Tests bestanden.** Frontend-Zeitachse: Pausenposition, Geschwindigkeitsänderung ohne Tonhöhenänderung, Tempoänderung während gehaltener Note, Ties über Takte und Abschnittsgrenzen, 6/8-Einzähler und deutsche H/B-Anzeige.
+- **2 Playwright-Abläufe bestanden.** Playwright auf Desktop und Pixel-7-Viewport: echte MusicXML-Datei importieren, SVG zeichnen, Note auswählen und Vorzeichen korrigieren, Undo/Redo, B♭-Trompete, Wiedergabe/Pause/Stop, Web-Audio-Signal größer als Null, Tempo/Passage speichern und wieder öffnen, MIDI/MusicXML-Export, kein horizontaler Seitenüberlauf. Vollständig offline geschalteter Browser lädt PWA und gecachte Partitur, Wiedergabe funktioniert. Keine JavaScript-Laufzeitfehler im getesteten Ablauf.
+- Echter End-to-End-OMR-API-Job: Notenbild hochladen → Hintergrundprozess → MusicXML → Referenzvergleich; 16/16 Tonhöhen und Dauern korrekt. Beispiel wurde mit Originalbild lokal behalten.
+- Zusätzlich echtes externes Notenbild (`oemer/figures/tabi.jpg`) auf CPU verarbeitet: 28 Takte, 346 klingende Ereignisse. Das beweist Verarbeitung, **nicht** deren musikalische Fehlerfreiheit; kein handgeprüfter Referenzvergleich für dieses externe Stück.
+- Optionale Compose-Konfiguration mit `docker compose config --quiet` geprüft. Containerbuild/-betrieb und Windows-Ausführung wurden nicht durchgeführt.
+
+## Bild-Corpus mit echter KI
+
+Ausgeführt mit:
+
+```sh
+.venv/bin/python scripts/verify_omr.py --corpus --report docs/omr-corpus-results.json
+```
+
+Die Bilder sind eigens komponierte und mit Verovio gerenderte Noten. Schräge/dunkle Varianten sind synthetische Aufnahmebedingungen, keine behaupteten Smartphone-Fotos. Erwartete MusicXML-Dateien enthalten sichtbare Auflösungszeichen und Triolenklammern; Referenzen werden von der Engine nie überschrieben. Der Runner verwendet einen temporären Ausgabeordner und HTTP ist in der Inferenz gesperrt.
+
+| Referenz | Tonhöhen/Dauern | Taktzahl, Tonart und Taktart | Ergebnis |
+|---|---:|---|---|
+| C-Dur / Abend am Fluss | 16/16 | korrekt | bestanden |
+| F-Dur | 15/15 | korrekt | bestanden |
+| G-Dur | 15/15 | korrekt | bestanden |
+| Punktierung, Achtel, Pausen, 3/4 | 12/12 | korrekt | bestanden |
+| Triolen und 6/8 | 15/15 | korrekt | bestanden |
+| Lokale Vorzeichen und Auflösungszeichen | 11/15 | korrekt | **fehlgeschlagen** |
+| Um 3° gedreht | 16/16 | korrekt | bestanden |
+| Helligkeit auf 65 % | 16/16 | korrekt | bestanden |
+
+**Der gesamte Corpus-Befehl endet deshalb korrekt mit Exitcode 1.** Zwei sichtbare Auflösungszeichen werden von HOMR 0.7.0 nicht umgesetzt; vier Noten bleiben fälschlich erhöht/erniedrigt. Die tatsächliche Engine-Ausgabe ist unter `examples/recognized/vorzeichen-homr.musicxml` abgelegt. Dies ist eine diagnostizierte Modellgrenze. Es wird weder die Referenz angepasst noch eine richtige Ersatzpartitur anstelle der Erkennung ausgegeben. Nutzer müssen diese Stellen am Original prüfen und können sie im Editor korrigieren. Testreport enthält alle Einzelwerte, keine erfundene Konfidenz.
+
+## Reproduzierbarkeit und Grenzen
+
+Ein Testsatz mit wenigen übersichtlichen Noten ersetzt keinen breiten OMR-Benchmark. Handschrift, komplexe Fotos, verschachtelte Wiederholungen, schwierige Mehrstimmigkeit oder alle Artikulationen sind damit nicht abgesichert. Kein Anspruch auf fehlerfreie Notenerkennung.
+
+Testdatenbanken der automatisierten API-/Browsertests sind temporär. Musikmodelltests verwenden überprüfbare Referenzdaten. Die Anwendung zeigt Erkennungsausgaben und tatsächliche Warnungen; eine fehlgeschlagene Erkennung erzeugt keine Demodaten. Aktuelle Testzahlen und letzte Kommandoergebnisse stehen im Abschlussbericht und in CI; der Corpusbericht ist versioniert.
+
+Screenshots der ausgeführten Oberfläche: [Dashboard](screenshots/dashboard.png) und [mobiler Player](screenshots/player-mobile.png). Diese zeigen tatsächliche lokale Daten bzw. den eindeutig benannten Browser-Test, keine simulierte Erkennung.
