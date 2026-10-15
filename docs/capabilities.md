@@ -23,13 +23,13 @@ Erkennung, Speicherung, Darstellung und Klang sind verschiedene Fähigkeiten. Ke
 ## Absichtlich transparent
 
 - Konkreter HOMR-0.7-Befund: Im Auflösungszeichen-Referenzbild werden zwei Naturals übersehen und vier Noten falsch ausgegeben. Das ist ein Modellfehler, kein bestandener Genauigkeitstest. Vergleichsansicht und manuelle Vorzeichenkorrektur sind die funktionierende Abhilfe.
-- Instrumentprofile bestimmen Transposition und MIDI-Programm. Browserklänge sind Synthese mit einfachen Wellenformen, keine echten Instrumentensamples. Es gibt keine externen Sample-Downloads während der Wiedergabe.
-- GPU-Modus, Audiveris und oemer sind keine implementierten Auswahloptionen. Die produktive Engine ist HOMR 0.7.0 / CPU; keine bezahlte API oder eigenes Training nötig.
+- Instrumentprofile bestimmen Transposition und MIDI-Programm. Der AudioWorklet-Sequencer spielt die mitgelieferte TimGM6mb-Samplebank. Sie wird nur vom eigenen NotePilot-Server geladen; lokal ist sie offline verfügbar. GM-Tuba dient auch als Tenorhorn-/Euphonium-Klang, kein spezielles Tenorhorn-Sample.
+- Das Linux-x86_64-Homeserver-Profil liefert Audiveris 5.9.0 als bevorzugte Erkennung gedruckter Noten mit. Ohne installiertes Audiveris bleibt HOMR 0.7.0 verfügbar. Keine garantierte Handschrifterkennung, kein GPU-Modus oder oemer.
 - Einzähler und Metronom verwenden den Taktart-Nenner; bei 6/8 entspricht der Grundschlag einer Achtel. Eine separate punktierte-Viertel-Betonung ist noch nicht konfigurierbar.
 - Kameraaufnahme nutzt `capture=environment` der Dateiauswahl. Eine Live-Kamera mit getUserMedia ist nicht implementiert.
 - Zuschneiden ist über Prozentfelder möglich. Perspektive verwendet vier geklickte Punkte. Die Vorschau von Helligkeit/Kontrast ist angenähert; endgültige Pixelkorrektur erfolgt auf dem Backend. Keine behauptete automatische Erkennung abgeschnittener Notensysteme.
 - Bildhinweise beruhen auf messbaren Schärfe-, Helligkeits-, Auflösungs- und Schräglagewerten; sie sind heuristisch und keine Erkennungskonfidenz.
-- Notenlängenänderungen können einen Takt unvollständig oder überfüllt machen. Die Prüfung zeigt das; sie erfindet keine fehlenden Noten.
+- Notenlängenänderungen/Erkennungsfehler können einen Takt unvollständig oder überfüllt machen. Die Prüfung zeigt das. Wiedergabe verwendet vorhandene Noten/Pausen und fügt keine unsichtbare Taktauffüllpause hinzu. Haltebögen aus `<tie>` und `<notations><tied>` werden zusammengeführt.
 - Mehrseitige Erkennung hängt von konsistenten Stimmenzahlen ab. Aus unabhängig fotografierten Stimmen entsteht keine automatische Ensemble-Synchronisierung.
 - PWA/Offline funktionieren für bereits geöffnete digitale Stücke. Der Browser führt HOMR nicht selbst aus. Fotos, neue Erkennung, MIDI-Export und dauerhaftes Speichern benötigen den Computer.
 - Sicherungswiederherstellung nimmt nur leere Bibliotheken an; Sicherung maximal 40 MB Upload/512 MB entpackt. Große Bibliotheken können direkt über den Datenordner gesichert werden.
@@ -37,3 +37,5 @@ Erkennung, Speicherung, Darstellung und Klang sind verschiedene Fähigkeiten. Ke
 - Linux/Python 3.12/Node 24/Chromium und Docker unter Linux x86_64 wurden praktisch geprüft: echter CPU-OMR-Job, dauerhafte SQLite-Bibliothek, Neustart und HTTP-Basic-Auth im Backend. Windows und ARM wurden nicht ausgeführt. Cloudflare-Tunnel/HTTPS auf dem tatsächlichen Homeserver müssen vom Betreiber eingerichtet und extern geprüft werden; dafür liegt ein separates [Deployment-Profil](../deploy/README.md) vor.
 
 Der [Projektauftrag](requirements.md) bleibt die Produktvision. Diese Liste und der [Testbericht](validation.md) beschreiben den tatsächlich gelieferten Stand; sie erklären keine noch offenen Fähigkeiten für abgeschlossen.
+
+Stand der neuen Erkennungs-/Audio-Version: Audiveris-Corpus und API-Job sowie gesampelte Audio-Wellenformen wurden praktisch geprüft. Der neue Containerbuild ist in dieser Cloud-Instanz durch fehlenden Docker-Speicher blockiert; ältere erfolgreiche Containerprüfungen belegen diesen neuen Build nicht. Siehe [Prüfbericht](validation.md).

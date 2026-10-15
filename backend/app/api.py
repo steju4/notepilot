@@ -466,7 +466,14 @@ def recognize(identity):
     job = db.uid()
     db.execute(
         "INSERT INTO jobs (id,piece_id,engine,status,stage,created_at) VALUES (?,?,?,?,?,?)",
-        (job, identity, "homr", "queued", "Wartet auf lokale Verarbeitung", db.now()),
+        (
+            job,
+            identity,
+            "audiveris" if omr.audiveris.status()["ready"] else "homr",
+            "queued",
+            "Wartet auf lokale Verarbeitung",
+            db.now(),
+        ),
     )
     omr.EXECUTOR.submit(omr.run_job, job, identity)
     return job_row(db.query("SELECT * FROM jobs WHERE id=?", (job,), one=True))
@@ -641,7 +648,7 @@ def setup_model_worker():
                 stderr=subprocess.STDOUT,
                 timeout=1800,
             )
-        if result.returncode or not omr.engine_status().get("ready"):
+        if result.returncode or not omr.engine_status("homr").get("ready"):
             raise RuntimeError(
                 "Die KI-Einrichtung ist fehlgeschlagen. Prüfe die Internetverbindung und data/logs/model-setup.log."
             )
@@ -682,15 +689,12 @@ def omr_status():
 def engines():
     return [
         dict(
-            id="homr",
-            name="HOMR",
-            **omr.engine_status(),
+            id=engine,
+            **omr.engine_status(engine),
             license="AGPL-3.0",
-            limitations=[
-                "Dynamik und Artikulation nicht klanglich interpretiert",
-                "Wiederholungen, Haltebögen und Vorzeichen manuell prüfen",
-            ],
+            limitations=["Ergebnis am Original prüfen; gedruckte Noten erforderlich."],
         )
+        for engine in ("audiveris", "homr")
     ]
 
 

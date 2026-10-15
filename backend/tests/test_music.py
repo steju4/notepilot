@@ -264,3 +264,50 @@ def test_valid_compressed_musicxml():
         )
         archive.writestr("score.xml", reference)
     assert pitches(read_xml(buffer.getvalue())) == [60]
+
+
+def test_homr_notation_only_ties_sound_continuously():
+    # HOMR emits <notations><tied> without the separate sound <tie> element.
+    result = parse_score(
+        score(
+            [
+                note(
+                    "F", duration=3, accidental="sharp", extra='<notations><tied type="start"/></notations>'
+                ),
+                note("F", duration=2, extra='<notations><tied type="stop"/><tied type="start"/></notations>')
+                + note(rest=True, duration=2),
+            ],
+            beats=3,
+        )
+    )
+    assert [(e["written_midi"], e["duration"]) for e in result["timeline"]] == [(66, 5)]
+    midi = mido.MidiFile(file=BytesIO(midi_bytes(result)))
+    assert sum(message.type == "note_on" for track in midi.tracks for message in track) == 1
+
+
+def test_short_recognized_bars_do_not_invent_unwritten_rests():
+    result = parse_score(score([note(duration=3), note("D", duration=3), note("E", duration=3)]))
+    assert [e["start"] for e in result["timeline"]] == [0, 3, 6]
+    assert result["duration_beats"] == 9
+    assert any(w["type"] == "duration" and w["measure"] == 2 for w in result["warnings"])
+
+
+def test_full_measure_rest_without_duration_uses_time_signature():
+    result = parse_score(
+        score(['<note><rest measure="yes"/><voice>1</voice></note>', note("D", duration=3)], beats=3)
+    )
+    assert result["timeline"][0]["start"] == 3
+
+
+def test_short_upper_part_does_not_overlap_the_next_bar_with_a_complete_lower_part():
+    root = score([note(duration=3), note("D", duration=3)])
+    lower = ET.fromstring(ET.tostring(root.find("part")))
+    lower.set("id", "P2")
+    for duration in lower.findall(".//note/duration"):
+        duration.text = "4"
+    definition = ET.SubElement(root.find("part-list"), "score-part", id="P2")
+    ET.SubElement(definition, "part-name").text = "Lower"
+    root.append(lower)
+    result = parse_score(read_xml(ET.tostring(root)))
+    assert [(m["start"], m["duration"]) for m in result["occurrences"]] == [(0, 4), (4, 4)]
+    assert [n["start"] for n in result["timeline"] if n["part"] == 1] == [0, 4]

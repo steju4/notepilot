@@ -6,13 +6,13 @@ NotePilot-Quellcode in diesem Repository: **AGPL-3.0-or-later**, vollständiger 
 
 | Komponente | Lizenz / Herkunft |
 |---|---|
-| React, TypeScript, Vite, FastAPI, Tone.js, Mido | MIT |
+| React, TypeScript, Vite, FastAPI, Mido | MIT |
 | OpenSheetMusicDisplay | BSD-3-Clause |
 | lucide-react | ISC |
 | Vite PWA Plugin | MIT; Workbox Apache-2.0 |
 | SQLite | Public Domain |
 | OpenCV | Apache-2.0 |
-| NumPy, music21 | BSD-3-Clause |
+| NumPy | BSD-3-Clause |
 | Pillow | HPND/PIL-Lizenz |
 | defusedxml | Python Software Foundation License |
 | pypdfium2 / PDFium | Apache-2.0 / BSD-artige PDFium- und Drittkomponentenlizenzen |
@@ -40,6 +40,6 @@ Die private kostenlose Nutzung ist der Projektzweck. Eine kommerzielle Freigabe 
 
 ## Klang und Notenbilder
 
-Es werden keine externen SoundFonts oder Instrumentensamples eingebunden. Audio ist lokale Tone.js-Synthese. Daher gibt es keine unklar lizenzierten Sample-Downloads. Die eigene Beispielpartitur wird als Beispiel ausgewählt, nie als angebliches Foto-Erkennungsergebnis verwendet.
+Die separat mitgelieferte Datei `frontend/public/audio/TimGM6mb.sf2` ist GPL-2.0-only, Copyright Tim Brechbill/David Bolton. Herkunft: Debian `timgm6mb-soundfont_1.3-5_all.deb`; Originalhinweise und GPL-2-Text liegen unter `frontend/public/audio/COPYRIGHT.txt` und `COPYING.txt`. Die SoundFont-Datei ist die editierbare Quelldatei der Bank. SpessaSynth und spessasynth_core sind Apache-2.0; Versionen sind im npm-Lock fixiert. Die Wiedergabe lädt keine fremden CDNs. Audiveris ist AGPL-3.0, die mitgelieferte Java-Laufzeit und Bibliotheken behalten ihre Lizenztexte; Tesseract tessdata_fast ist Apache-2.0. Die Quelladressen und gepinnten Artefakt-Hashes sind in `scripts/setup_audiveris.py` dokumentiert. Die eigene Beispielpartitur wird als Beispiel ausgewählt, nie als angebliches Foto-Erkennungsergebnis verwendet.
 
 Zum ersten unabhängigen Integrationsversuch wurde das öffentlich zugängliche `figures/tabi.jpg` aus [BreezeWhite/oemer](https://github.com/BreezeWhite/oemer) temporär geladen und lokal erkannt. Das Bild und diese externe Musik wurden nicht in dieses Repository übernommen.

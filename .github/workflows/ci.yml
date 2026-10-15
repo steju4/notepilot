@@ -23,3 +23,13 @@ jobs:
         working-directory: frontend
       - run: npm run test:e2e
         working-directory: frontend
+
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build --build-arg NOTEPILOT_INCLUDE_MODELS=1 --build-arg NOTEPILOT_INCLUDE_AUDIVERIS=1 --build-arg VITE_NOTEPILOT_HOSTED=1 -t notepilot-ci .
+      - run: >-
+          docker run --rm --init --network none --cpus 2 --memory 4g
+          --mount type=bind,src=${{ github.workspace }}/examples/corpus,dst=/input,readonly
+          --entrypoint /app/.venv/bin/python notepilot-ci /app/scripts/verify_container.py

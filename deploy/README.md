@@ -35,7 +35,7 @@ docker compose --env-file deploy/.env -f deploy/compose.yaml config --quiet
 docker compose --env-file deploy/.env -f deploy/compose.yaml build
 ```
 
-Das Netz wird bereits von NPM und cloudflared verwendet; kein neues Proxy-Netz anlegen. Beim ersten Build werden alle Abhängigkeiten und ungefähr 150 MiB CPU-Modellgewichte installiert. Mehrere GB freien Speicher für Build, Image und Bibliothek vorsehen. Besucher brauchen keine lokale Installation. Erkennung benötigt danach keinen externen KI-Dienst und keine GPU. Die 4-GB-Grenze gilt zur Laufzeit, nicht für den Image-Bau; vorhandene Dienste brauchen zusätzlich RAM.
+Das Netz wird bereits von NPM und cloudflared verwendet; kein neues Proxy-Netz anlegen. Beim ersten Build werden alle Abhängigkeiten, Audiveris 5.9.0 inklusive Java/OCR und ungefähr 150 MiB HOMR-Modellgewichte installiert. Audiveris wird für gedruckte Noten bevorzugt; HOMR bleibt als kompatible Alternative erhalten. Mehrere GB freien Speicher für Build, Image und Bibliothek vorsehen. Besucher brauchen keine lokale Installation. Erkennung benötigt danach keinen externen KI-Dienst und keine GPU. Die 4-GB-Grenze gilt zur Laufzeit, nicht für den Image-Bau; vorhandene Dienste brauchen zusätzlich RAM.
 
 ## 2. Secret außerhalb von Git und Image erstellen
 
@@ -138,6 +138,10 @@ docker compose --env-file deploy/.env -f deploy/compose.yaml up -d --force-recre
 
 Ein Neuerstellen ist notwendig: Die Konfiguration wird beim Prozessstart gelesen, und atomar ersetzte Secret-Dateien benötigen einen neuen Datei-Mount. Das Datenvolume bleibt erhalten. Alte gespeicherte Browserzugangsdaten sind danach ungültig.
 
+## Update dieser Erkennungs-/Wiedergabekorrekturen
+
+Nach dem Aktualisieren des Repositorys das Image mit `up -d --build` neu bauen. Danach die Browserseite neu laden. Bereits falsch erkannte Fotos erneut erkennen lassen; bestehende Erkennungen werden nicht automatisch verändert, die Versionshistorie bleibt erhalten. Bei Tenorhorn-Violinschlüsselnotation in B das neue Profil **Tenorhorn in B♭ (Violinschlüssel)** wählen. Die GM-Samplebank verwendet für Tenorhorn das Tuba-Register.
+
 ## Backup, Update und Abschalten
 
 Vor Updates **Einstellungen → Backup exportieren** nutzen und das ZIP außerhalb des Servers aufbewahren. Das Auth-Secret liegt außerhalb des Datenvolumes; separat sicher aufbewahren oder mit einem neuen Passwort neu erstellen.
@@ -167,3 +171,5 @@ Wieder einschalten: `docker compose --env-file deploy/.env -f deploy/compose.yam
 | Upload 413 | NPM-Limit; Anwendung erlaubt maximal 40 MiB pro Upload |
 
 Das Image und die Schutzmechanismen werden in der Entwicklungsumgebung geprüft. Dein tatsächlicher Tunnel und die öffentlich erreichbare HTTPS-Adresse müssen nach deiner Einrichtung wie oben geprüft werden.
+
+Prüfstand dieser Erweiterung: Die lokale Audiveris-Erkennung und neue Sample-Wiedergabe wurden getestet. Der neue Containerbuild konnte hier wegen erschöpftem Cloud-Docker-Speicher nicht abgeschlossen werden. Der neue GitHub-CI-Job `container` baut das vollständige Image und testet Audiveris offline unter 2 CPUs/4 GiB. Ein bestandener Lauf dieses Jobs ist vor Übernahme des neuen Images zu prüfen; es wird hier noch kein bestandener Containerlauf behauptet.

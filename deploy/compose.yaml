@@ -7,6 +7,7 @@ services:
       context: ..
       args:
         NOTEPILOT_INCLUDE_MODELS: "1"
+        NOTEPILOT_INCLUDE_AUDIVERIS: "1"
         VITE_NOTEPILOT_HOSTED: "1"
     environment:
       NOTEPILOT_DATA_DIR: /data

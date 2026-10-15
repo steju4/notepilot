@@ -25,24 +25,25 @@ Ohne `--omr` ist die Anwendung bereits mit MusicXML nutzbar. Das KI-Modell kann 
 - JPG, PNG, WebP und PDF, mehrere Seiten; direktes MusicXML/MXL ohne KI.
 - Kameraaufnahme über die native Dateiauswahl des Smartphones.
 - Bildqualität prüfen, zuschneiden, drehen, ausrichten, Kontrast/Helligkeit, Schwarz-Weiß und vierpunktige Perspektivkorrektur; Original bleibt erhalten.
-- Echte HOMR-0.7.0-CPU-Erkennung als Hintergrundjob, mit Status, Abbruch und Zeitlimit. Keine Ersatzpartitur bei Fehlern.
+- Lokale CPU-Erkennung gedruckter Noten mit Audiveris 5.9.0 im Homeserver-Profil; HOMR 0.7.0 als kompatible Alternative als Hintergrundjob, mit Status, Abbruch und Zeitlimit. Keine Ersatzpartitur bei Fehlern.
 - Digitale Partitur mit OpenSheetMusicDisplay, Original und Vergleich; anklickbare Noten, Zoom und aktuelle Notenfarbe während der Wiedergabe.
 - Ton/Oktave/Vorzeichen, Notenwert, Punktierung und Haltebogen ändern; Note/Pause einfügen oder entfernen. Tonart, Taktart, Schlüssel, Wiederholung und Klammern bearbeiten.
 - Versionshistorie mit Undo/Redo; ursprüngliches Erkennungsergebnis bleibt als Version erhalten.
-- Tone.js-Audio, Pause/Fortsetzen/Stop, Tempo, Lautstärke, Referenzton; notierte und klingende Tonhöhen werden getrennt.
-- 25 Instrumentprofile, einschließlich B♭-Trompete, Klarinette, E♭-Altsaxophon, Tenorsaxophon und F-Horn. MusicXML-Transposition wird im automatischen Modus nicht doppelt angewendet.
+- General-MIDI-Samples mit AudioWorklet-Sequencer, Pause/Fortsetzen/Stop, Tempo, Lautstärke, Referenzton; notierte und klingende Tonhöhen werden getrennt.
+- 26 Instrumentprofile, einschließlich B♭-Trompete, Klarinette, E♭-Altsaxophon, Tenorsaxophon und F-Horn. MusicXML-Transposition wird im automatischen Modus nicht doppelt angewendet.
 - Taktauswahl, A-B-Loops, Anzahl Durchläufe, Pausen, Metronom, Einzähler, Unterteilung, automatische Temposteigerung und gespeicherte Passagen.
 - Lokale SQLite-Bibliothek, Suche, Sortierung, Favoriten, Duplikat und Metadaten.
 - MusicXML- und MIDI-Export; MIDI verwendet klingende Tonhöhen und die expandierte Abspielreihenfolge.
 - Bibliothek als ZIP sichern und in eine leere Bibliothek wiederherstellen.
-- Bereits geöffnete Stücke im IndexedDB-Cache; Offline-Anzeige und synthetische Wiedergabe auch ohne Backend. Änderungen/Erkennung brauchen das Backend.
+- Bereits geöffnete Stücke im IndexedDB-Cache; Offline-Anzeige und gesampelte Wiedergabe auch ohne Backend. Änderungen/Erkennung brauchen das Backend.
 
-**Klänge sind lokale Synthesizer, keine realistischen Instrumentensamples.** Erkennung ist fehlbar. Die Fähigkeit, ein Symbol aus MusicXML zu speichern und abzuspielen, bedeutet nicht, dass HOMR es zuverlässig aus Fotos erkennt. Siehe [Fähigkeiten und Grenzen](docs/capabilities.md).
+**Klänge stammen aus der mitgelieferten TimGM6mb-Instrumentenbank.** Tenorhorn nutzt das GM-Tuba-Register, kein eigens aufgenommenes Tenorhorn. Erkennung ist fehlbar. Die Fähigkeit, ein Symbol aus MusicXML zu speichern und abzuspielen, bedeutet nicht, dass HOMR es zuverlässig aus Fotos erkennt. Siehe [Fähigkeiten und Grenzen](docs/capabilities.md).
 
 ## Entwicklung
 
 ```sh
 python scripts/install.py --omr --dev
+# Optional auf Linux x86_64: python scripts/install.py --audiveris --dev
 # Terminal 1:
 .venv/bin/python -m uvicorn app.api:app --app-dir backend --host 127.0.0.1 --port 8000 --reload
 # Terminal 2:
@@ -108,3 +109,7 @@ Für deinen **Homeserver mit Cloudflare Tunnel und nginx Proxy Manager** gibt es
 NotePilot-Code: AGPL-3.0-or-later. HOMR läuft als getrennter lokaler Prozess und ist AGPL-3.0; Gewichte und Trainingsdaten haben gesondert dokumentierte Herkunfts- und Nutzungsbedingungen. Keine pauschale Freigabe für kommerzielle Modellnutzung. Die eigene Beispielmelodie und Referenzbilder sind CC0.
 
 Ein konkreter Genauigkeitshinweis: Im erweiterten OMR-Corpus bestehen sieben von acht Bildern. HOMR übersieht in der Auflösungszeichen-Referenz zwei Zeichen; vier Noten brauchen manuelle Korrektur. Der Corpus-Test bleibt deshalb fehlgeschlagen und wird nicht als bestandener Test dargestellt.
+
+## Korrekturen für Foto-Erkennung und Wiedergabe
+
+HOMRs rein grafische `<notations><tied>`-Haltebögen werden jetzt wie klangliche Haltebögen gelesen und über Taktgrenzen gehalten. Unvollständig erkannte Takte erhalten keine unsichtbare Auffüllpause mehr; die Warnung über fehlende Notenwerte bleibt. Explizite Pausen werden weiter abgespielt. Das Homeserver-Image verwendet für gedruckte Noten bevorzugt Audiveris. Nach einem Update bereits falsch erkannte Fotos erneut erkennen lassen; alte Versionen bleiben erhalten. Bei Tenorhorn in B mit Violinschlüssel das entsprechende neue Instrumentprofil wählen; das bisherige Bassschlüssel/C-Profil bleibt unverändert.

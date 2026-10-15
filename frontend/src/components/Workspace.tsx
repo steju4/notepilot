@@ -197,7 +197,11 @@ export function Workspace({
     setSelected(note);
     if (note.sounding_midi !== null)
       void player.current
-        ?.audition(note.sounding_midi, piece!.instrument, settings.volume)
+        ?.audition(
+          note.sounding_midi,
+          instruments.find((i) => i.id === piece!.instrument)?.program ?? 0,
+          settings.volume,
+        )
         .catch((e) => onError((e as Error).message));
   };
   const changeNote = (action: string, fields: Record<string, unknown>) =>
@@ -220,7 +224,12 @@ export function Workspace({
       return;
     }
     void player.current
-      ?.start(score, settings, piece.instrument, setPosition)
+      ?.start(
+        score,
+        settings,
+        instruments.find((i) => i.id === piece.instrument)?.program ?? 0,
+        setPosition,
+      )
       .catch((e) => onError((e as Error).message));
   };
   const versionIndex = piece?.versions.findIndex((v) => v.id === piece.current_version) ?? -1;
@@ -402,7 +411,8 @@ export function Workspace({
             <strong>Echte KI-Erkennung abgeschlossen. Bitte das Ergebnis prüfen.</strong>
             <p>
               {latestJob.details.pages} Seite(n) · {latestJob.details.duration_seconds?.toFixed(1)}{" "}
-              Sekunden · HOMR {latestJob.details.version} · {latestJob.details.mode}
+              Sekunden · {latestJob.details.engine === "audiveris" ? "Audiveris" : "HOMR"}{" "}
+              {latestJob.details.version} · {latestJob.details.mode}
             </p>
           </div>
         </div>
@@ -647,7 +657,7 @@ export function Workspace({
                 if (selected.sounding_midi !== null)
                   void player.current?.audition(
                     selected.sounding_midi,
-                    piece.instrument,
+                    instruments.find((i) => i.id === piece.instrument)?.program ?? 0,
                     settings.volume,
                   );
               }}
@@ -939,12 +949,19 @@ export function Workspace({
               />
             </label>
             <p className="small muted">
-              Lokaler Synthesizer · kein realistisches Instrumentensample. Vorhandene
-              MusicXML-Transposition wird im automatischen Modus nur einmal angewendet.
+              Lokale General-MIDI-Instrumentenbank mit Samples. Tenorhorn, Bariton und Euphonium
+              verwenden das GM-Tuba-Register. Vorhandene MusicXML-Transposition wird im
+              automatischen Modus nur einmal angewendet.
             </p>
             <button
               className="text-button"
-              onClick={() => void player.current?.audition(69, piece.instrument, settings.volume)}
+              onClick={() =>
+                void player.current?.audition(
+                  69,
+                  instruments.find((i) => i.id === piece.instrument)?.program ?? 0,
+                  settings.volume,
+                )
+              }
             >
               <Volume2 size={16} />
               Referenzton A · 440 Hz

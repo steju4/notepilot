@@ -60,6 +60,7 @@ export interface Job {
     duration_seconds?: number;
     mode?: string;
     version?: string;
+    engine?: string;
   };
 }
 export interface Detail extends Piece {
@@ -153,6 +154,8 @@ export interface Section {
   notes: string;
 }
 export interface Engine {
+  engine?: string;
+  name?: string;
   ready: boolean;
   installed: boolean;
   mode: string;

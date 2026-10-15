@@ -12,7 +12,7 @@ flowchart LR
   XML --> Validation[Musikmodell / Plausibilitätsprüfung]
   Validation --> Browser
   Browser --> Render[OpenSheetMusicDisplay]
-  Browser --> Audio[Tone.js / Web Audio]
+  Browser --> Audio[SpessaSynth AudioWorklet / lokale GM-Samples]
 ```
 
 ## Daten und Musik
@@ -27,7 +27,7 @@ SQLite nutzt Foreign Keys, WAL, ein Connection-Objekt pro Operation und kurze Tr
 
 `recognize_score(input_document, options)` kapselt den Engine-Prozess. Eingabe wird in einen temporären Arbeitsordner kopiert, Prozessstatus und Timeout werden überwacht, Ausgabe wird als tatsächlich erzeugtes MusicXML gelesen und validiert. Abbruch beendet den aktiven Prozess; keine Dummy-Noten als Fallback. Seiten werden nur bei gleicher Stimmenzahl in Reihenfolge zusammengeführt. Unterschiedliche Besetzungen müssen einzeln geprüft werden.
 
-Der HOMR-Adapter verwendet die veröffentlichte Version 0.7.0. Diese schreibt ohne Adapter Gewichte in Paketverzeichnisse und erzeugt zusätzliche Config-Instanzen. Der versionierte Runner bindet deren Modellpfade zur Laufzeit an `data/models`, ohne HOMR-Quelldateien zu verändern. Neuere HOMR-Versionen müssen eigens getestet werden. Audiveris/oemer sind nicht als scheinbar verfügbare Engines aufgeführt.
+Der HOMR-Adapter verwendet die veröffentlichte Version 0.7.0. Diese schreibt ohne Adapter Gewichte in Paketverzeichnisse und erzeugt zusätzliche Config-Instanzen. Der versionierte Runner bindet deren Modellpfade zur Laufzeit an `data/models`, ohne HOMR-Quelldateien zu verändern. Neuere HOMR-Versionen müssen eigens getestet werden. Audiveris 5.9.0 ist im Linux-x86_64-Homeserver-Profil die bevorzugte Engine für gedruckte Noten. Der separate Headless-Prozess wird auf 2 GiB Java-Heap und zwei Prozessoren begrenzt, verwendet mitgelieferte OCR-Daten und liefert echtes MXL. oemer bleibt nicht integriert.
 
 ## Ressourcen und Dateisicherheit
 
@@ -38,3 +38,5 @@ Backups enthalten einen SQLite-Snapshot; Wiederherstellung prüft Archivpfade, G
 ## Betrieb und Grenzen
 
 Ein Serverprozess, eine lokale Datenbank, kein Redis/PostgreSQL oder externer KI-Dienst. PWA-App-Shell und explizit geöffnete JSON-/XML-Partituren sind lokal gecacht; originale Fotoansicht und neue Erkennungen brauchen den Server. Vite dient nur der Entwicklung. Der Produktionsbuild wird von FastAPI am selben Origin ausgeliefert.
+
+Der Sample-Sequencer verarbeitet eine zusammenhängende MIDI-Zeitachse im AudioWorklet. UI-Timer zeigen nur die Position an und lösen keine einzelnen Takte aus. Noten werden nicht pauschal verkürzt. Fehlende Notenwerte werden gewarnt und nicht durch erfundene Stille ersetzt. Die bislang deklarierte, unbenutzte music21-/Matplotlib-Abhängigkeit wurde entfernt; der vorhandene XML-/MIDI-Parser ist eigenständig.

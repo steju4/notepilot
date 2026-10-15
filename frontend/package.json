@@ -15,7 +15,7 @@
     "opensheetmusicdisplay": "^1.9.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "tone": "^15.1.22"
+    "spessasynth_lib": "4.3.14"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.0",
@@ -27,6 +27,7 @@
     "typescript": "~5.9.3",
     "vite": "^7.3.0",
     "vite-plugin-pwa": "^1.2.0",
-    "vitest": "^4.0.0"
+    "vitest": "^4.0.0",
+    "spessasynth_core": "4.3.22"
   }
 }

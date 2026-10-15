@@ -185,6 +185,12 @@ def parse_score(root, instrument="piano", notation="auto", extra_transpose=0):
                             )
                         )
                         duration = Fraction(0)
+                    elif (
+                        duration <= 0
+                        and child.find("rest") is not None
+                        and child.find("rest").get("measure") == "yes"
+                    ):
+                        duration = Fraction(beats * 4, beat_type)
                     elif duration <= 0:
                         duration = fraction(TYPES.get(typ, 1)) * sum(
                             (Fraction(1, 2) ** i for i in range(dots + 1)), Fraction(0)
@@ -201,7 +207,19 @@ def parse_score(root, instrument="piano", notation="auto", extra_transpose=0):
                     voice = text(child, "voice", "1")
                     staff = text(child, "staff", "1")
                     voice_ends[(voice, staff)] = max(voice_ends.get((voice, staff), 0), start + duration)
-                    tie = [t.get("type") for t in child.findall("tie")]
+                    # HOMR emits only the notation form; other exporters include both.
+                    tie = list(
+                        dict.fromkeys(
+                            kind
+                            for element in child.findall("tie") + child.findall("notations/tied")
+                            for kind in (
+                                ["stop", "start"]
+                                if element.get("type") == "continue"
+                                else [element.get("type")]
+                            )
+                            if kind in ("start", "stop")
+                        )
+                    )
                     step, octave, alter, midi = None, None, None, None
                     if child.find("pitch") is not None:
                         step = text(child, "pitch/step")
@@ -273,7 +291,9 @@ def parse_score(root, instrument="piano", notation="auto", extra_transpose=0):
                     events.append(event)
             expected = Fraction(beats * 4, beat_type)
             pickup = measure.get("implicit") == "yes" or (mi == 0 and 0 < maximum < expected)
-            length = maximum if pickup else max(expected, maximum)
+            # Never turn missing recognition output into an unwritten trailing rest.
+            # Explicit rests and <forward> already contribute to maximum.
+            length = maximum if maximum > 0 else expected
             if not pickup and maximum != expected:
                 warnings.append(
                     warning(
@@ -315,7 +335,7 @@ def parse_score(root, instrument="piano", notation="auto", extra_transpose=0):
     warnings.append(
         warning(
             "interpretation",
-            "Erkennung prüfen: HOMR kann Auflösungszeichen übersehen. Vorzeichen immer mit dem Original vergleichen. Wiederholungen und Bindebögen ebenfalls prüfen. Dynamik und Artikulation werden gespeichert und angezeigt, aber klanglich nicht interpretiert.",
+            "Erkannte Vorzeichen, Wiederholungen und Bögen am Original prüfen. Haltebögen werden gehalten; Phrasierungsbögen verschmelzen keine Tonhöhen. Dynamik und Artikulation werden gespeichert und angezeigt, aber klanglich nicht interpretiert.",
             severity="info",
         )
     )
@@ -324,12 +344,13 @@ def parse_score(root, instrument="piano", notation="auto", extra_transpose=0):
     beat = 0.0
     for occurrence, mi in enumerate(order):
         first = parts[0]["measures"][mi]
+        span = max(part["measures"][mi]["duration"] for part in parts if mi < len(part["measures"]))
         occurrences.append(
             dict(
                 measure=mi + 1,
                 occurrence=occurrence,
                 start=beat,
-                duration=first["duration"],
+                duration=span,
                 time=first["time"],
                 tempos=first["tempos"],
             )
@@ -362,7 +383,7 @@ def parse_score(root, instrument="piano", notation="auto", extra_transpose=0):
                         active_ties[key] = e
                     else:
                         active_ties.pop(key, None)
-        beat += first["duration"]
+        beat += span
     return dict(
         title=title,
         parts=parts,

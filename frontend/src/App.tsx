@@ -304,7 +304,7 @@ function App() {
             <span className={`status-dot ${!engine?.ready ? "pending" : ""}`} />
             <span>
               {engine?.ready ? "Lokale KI bereit" : "KI-Einrichtung prüfen"}
-              <small>HOMR · CPU</small>
+              <small>{engine?.name ?? "Notenerkennung"} · CPU</small>
             </span>
           </div>
           <span className="sidebar-version">NotePilot 0.1 · mit Musik im Kopf</span>
@@ -348,8 +348,8 @@ function App() {
                 <strong>Online-Testversion</strong>
                 <p>
                   Noten und Uploads werden auf diesem Testserver verarbeitet und gespeichert. Der
-                  Browser führt HOMR nicht selbst aus. Die Bibliothek liegt im dauerhaften
-                  Datenvolume. Sichere wichtige Ergebnisse zusätzlich per Export.
+                  Browser führt die Notenerkennung nicht selbst aus. Die Bibliothek liegt im
+                  dauerhaften Datenvolume. Sichere wichtige Ergebnisse zusätzlich per Export.
                 </p>
               </div>
             </div>
@@ -406,8 +406,8 @@ function App() {
                     {engine?.ready ? "Bereit für CPU-Erkennung" : "Einrichtung erforderlich"}
                   </span>
                   <p>
-                    HOMR 0.7.0 verarbeitet deine Noten auf diesem Computer. Nur die erstmalige
-                    Installation benötigt einen Download.
+                    {engine?.name ?? "Die Erkennung"} {engine?.version} verarbeitet gedruckte Noten
+                    lokal. Nur die erstmalige Installation benötigt einen Download.
                   </p>
                   {engine?.message && <p>{engine.message}</p>}
                   {engine?.models.map((m) => (

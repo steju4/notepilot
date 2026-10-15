@@ -17,6 +17,7 @@ PROFILES = [
     ("flugelhorn", "Flügelhorn in B♭", "Blechbläser", -2, 56, 54, 86),
     ("horn", "Horn in F", "Blechbläser", -7, 60, 48, 89),
     ("tenorhorn", "Tenorhorn (Bassschlüssel, C)", "Blechbläser", 0, 58, 40, 77),
+    ("tenorhorn-bb", "Tenorhorn in B♭ (Violinschlüssel)", "Blechbläser", -14, 58, 48, 89),
     ("baritone", "Bariton (Bassschlüssel, C)", "Blechbläser", 0, 58, 34, 77),
     ("euphonium", "Euphonium (Bassschlüssel, C)", "Blechbläser", 0, 58, 34, 77),
     ("trombone", "Posaune", "Blechbläser", 0, 57, 40, 77),
@@ -35,7 +36,7 @@ INSTRUMENTS = {
         transpose=p[3],
         program=p[4],
         range=[p[5], p[6]],
-        sound="Lokaler Synthesizer (kein Instrumentensample)",
+        sound="Lokale General-MIDI-Samples (TimGM6mb)",
     )
     for p in PROFILES
 }

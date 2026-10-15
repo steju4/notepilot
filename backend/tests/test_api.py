@@ -120,6 +120,7 @@ def test_bad_files_no_partial_documents(client):
 
 
 def test_missing_model_is_explicit(client, monkeypatch):
+    monkeypatch.setenv("NOTEPILOT_AUDIVERIS_DIR", "/does-not-exist")
     monkeypatch.setattr(omr, "OMR_PYTHON", Path("/does-not-exist"))
     assert client.get("/api/v1/omr/status").json()["ready"] is False
     identity = create(client)

@@ -46,7 +46,16 @@ def challenge(response):
 
 @pytest.mark.parametrize(
     "path",
-    ["/", "/icon.svg", "/api/v1/health", "/api/v1/runtime", "/api/v1/pieces", "/api/v1/backup", "/missing"],
+    [
+        "/",
+        "/icon.svg",
+        "/audio/TimGM6mb.sf2",
+        "/api/v1/health",
+        "/api/v1/runtime",
+        "/api/v1/pieces",
+        "/api/v1/backup",
+        "/missing",
+    ],
 )
 def test_missing_wrong_and_correct_credentials(protected, path):
     p = protected

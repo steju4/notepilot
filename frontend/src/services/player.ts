@@ -1,5 +1,7 @@
-import * as Tone from "tone";
+import { Sequencer, WorkletSynthesizer } from "spessasynth_lib";
+import processorUrl from "spessasynth_lib/dist/spessasynth_processor.min.js?url";
 import { buildPlan } from "./timing";
+import { planMidi } from "./midi";
 import type { PlaybackSettings, Score } from "../types";
 export interface Position {
   seconds: number;
@@ -12,51 +14,75 @@ export interface Position {
   counting: boolean;
 }
 export class Player {
-  private synth: Tone.PolySynth | undefined;
-  private click: Tone.Synth | undefined;
-  private timer: ReturnType<typeof setInterval> | undefined;
-  private loopTimer: ReturnType<typeof setTimeout> | undefined;
-  private score: Score | undefined;
-  private settings: PlaybackSettings | undefined;
-  private plan: ReturnType<typeof buildPlan> | undefined;
+  private context?: AudioContext;
+  private synth?: WorkletSynthesizer;
+  private sequencer?: Sequencer;
+  private output?: GainNode;
+  private loading?: Promise<void>;
+  private timer?: ReturnType<typeof setInterval>;
+  private loopTimer?: ReturnType<typeof setTimeout>;
+  private auditionTimer?: ReturnType<typeof setTimeout>;
+  private score?: Score;
+  private settings?: PlaybackSettings;
+  private plan?: ReturnType<typeof buildPlan>;
   private cycle = 1;
   private state: Position["state"] = "stopped";
   private callback: (p: Position) => void = () => {};
-  private instrument = "piano";
+  private program = 0;
   private generation = 0;
-  async init(instrument: string, volume: number) {
-    await Tone.start();
-    if (!this.synth || instrument !== this.instrument) {
-      this.synth?.dispose();
-      const wave =
-        instrument.includes("sax") || instrument === "clarinet"
-          ? "square"
-          : instrument === "flute" || instrument === "piccolo"
-            ? "sine"
-            : instrument === "trumpet" || instrument === "horn"
-              ? "sawtooth"
-              : "triangle";
-      this.synth = new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: wave },
-        envelope: { attack: 0.015, decay: 0.18, sustain: 0.25, release: 0.16 },
-      }).toDestination();
-      this.instrument = instrument;
+  async init(program: number, volume: number) {
+    if (!this.context || this.context.state === "closed") {
+      const context = new AudioContext();
+      this.context = context;
+      this.loading = (async () => {
+        if (!context.audioWorklet)
+          throw new Error("Instrumentklänge benötigen HTTPS oder einen lokalen Browseraufruf.");
+        const response = await fetch("/audio/TimGM6mb.sf2");
+        if (!response.ok)
+          throw new Error(
+            "Die lokale Instrumentenbank konnte nicht geladen werden. Bitte die Seite neu laden.",
+          );
+        const bank = await response.arrayBuffer();
+        await context.audioWorklet.addModule(processorUrl);
+        const synth = new WorkletSynthesizer(context);
+        synth.setLogLevel(false, false, false);
+        await synth.soundBankManager.addSoundBank(bank, "notepilot");
+        await synth.isReady;
+        if (context.state === "closed") {
+          synth.destroy();
+          return;
+        }
+        this.synth = synth;
+        this.output = context.createGain();
+        synth.connect(this.output);
+        this.output.connect(context.destination);
+        this.sequencer = new Sequencer(synth, { skipToFirstNoteOn: false });
+        this.sequencer.loopCount = 0;
+        this.sequencer.eventHandler.addEvent("songChange", "start", () => {
+          if (this.state === "playing") this.sequencer?.play();
+        });
+        this.sequencer.eventHandler.addEvent("songEnded", "end", () => this.finishCycle());
+      })().catch((error) => {
+        void context.close();
+        this.loading = undefined;
+        throw error;
+      });
     }
-    this.synth.volume.value = Tone.gainToDb(Math.max(0.001, volume)) - 12;
-    this.click ??= new Tone.Synth({
-      oscillator: { type: "sine" },
-      envelope: { attack: 0.001, decay: 0.03, sustain: 0, release: 0.02 },
-    }).toDestination();
-    this.click.volume.value = -20;
+    await this.context.resume();
+    await this.loading;
+    this.program = program;
+    if (this.output) this.output.gain.value = Math.max(0, Math.min(1, volume));
   }
   async start(
     score: Score,
     settings: PlaybackSettings,
-    instrument: string,
+    program: number,
     callback: (p: Position) => void,
   ) {
     this.stop();
-    await this.init(instrument, settings.volume);
+    const generation = this.generation;
+    await this.init(program, settings.volume);
+    if (generation !== this.generation) return;
     this.score = score;
     this.settings = { ...settings };
     this.callback = callback;
@@ -64,55 +90,34 @@ export class Player {
     this.schedule();
   }
   private schedule() {
-    if (!this.score || !this.settings) return;
-    const transport = Tone.getTransport();
-    transport.stop();
-    transport.cancel();
-    transport.seconds = 0;
+    if (!this.score || !this.settings || !this.sequencer) return;
+    this.synth?.stopAll(true);
     this.plan = buildPlan(this.score, this.settings);
     if (!this.plan.total) return;
-    const generation = ++this.generation;
-    for (const note of this.plan.notes)
-      transport.schedule(
-        (time) =>
-          this.synth?.triggerAttackRelease(
-            Tone.Frequency(note.sounding_midi!, "midi").toFrequency(),
-            Math.max(0.02, note.seconds - 0.015),
-            time,
-            0.8,
-          ),
-        note.at,
-      );
-    for (const tick of this.plan.clicks) {
-      if (this.settings.metronome || tick.at < this.plan.countIn)
-        transport.schedule(
-          (time) => this.click?.triggerAttackRelease(tick.accent ? "C7" : "C6", 0.025, time),
-          tick.at,
-        );
-    }
-    transport.schedule(
-      (time) =>
-        Tone.getDraw().schedule(() => {
-          if (generation !== this.generation) return;
-          const settings = this.settings!;
-          if (settings.loop && (settings.loops === 0 || this.cycle < settings.loops)) {
-            this.cycle++;
-            if (settings.ramp > 0 && (this.cycle - 1) % settings.rampEvery === 0)
-              settings.speed = Math.min(settings.target, settings.speed + settings.ramp);
-            this.loopTimer = setTimeout(() => this.schedule(), Math.max(0, settings.gap) * 1000);
-          } else this.stop();
-        }, time),
-      this.plan.total,
-    );
-    transport.start("+0.05");
     this.state = "playing";
+    this.sequencer.loadNewSongList([
+      {
+        binary: planMidi(this.plan, this.program, this.settings.metronome),
+        fileName: "NotePilot.mid",
+      },
+    ]);
     if (this.timer) clearInterval(this.timer);
     this.timer = setInterval(() => this.report(), 50);
     this.report();
   }
+  private finishCycle() {
+    if (this.state !== "playing" || !this.settings) return;
+    const settings = this.settings;
+    if (settings.loop && (settings.loops === 0 || this.cycle < settings.loops)) {
+      this.cycle++;
+      if (settings.ramp > 0 && (this.cycle - 1) % settings.rampEvery === 0)
+        settings.speed = Math.min(settings.target, settings.speed + settings.ramp);
+      this.loopTimer = setTimeout(() => this.schedule(), Math.max(0, settings.gap) * 1000);
+    } else this.stop();
+  }
   private report() {
     if (!this.plan || !this.settings) return;
-    const seconds = Math.min(Tone.getTransport().seconds, this.plan.total);
+    const seconds = Math.min(this.sequencer?.currentTime ?? 0, this.plan.total);
     const m = [...this.plan.measures].reverse().find((m) => m.at <= seconds);
     const event = this.plan.notes.find((n) => seconds >= n.at && seconds < n.at + n.seconds);
     this.callback({
@@ -128,36 +133,24 @@ export class Player {
   }
   pause() {
     if (this.state === "playing") {
-      Tone.getTransport().pause();
-      this.synth?.releaseAll();
+      this.sequencer?.pause();
       this.state = "paused";
       if (this.loopTimer) clearTimeout(this.loopTimer);
-      this.report();
     } else if (this.state === "paused") {
-      // Retrigger sustained notes at the paused position.
-      const at = Tone.getTransport().seconds;
-      this.plan?.notes
-        .filter((n) => n.at < at && n.at + n.seconds > at)
-        .forEach((n) =>
-          this.synth?.triggerAttackRelease(
-            Tone.Frequency(n.sounding_midi!, "midi").toFrequency(),
-            n.at + n.seconds - at,
-          ),
-        );
-      Tone.getTransport().start();
+      this.sequencer?.play();
       this.state = "playing";
-      this.report();
     }
+    this.report();
   }
   stop() {
     this.generation++;
-    Tone.getTransport().stop();
-    Tone.getTransport().cancel();
-    this.synth?.releaseAll();
+    this.state = "stopped";
+    this.sequencer?.pause();
+    this.synth?.stopAll(true);
     if (this.timer) clearInterval(this.timer);
     if (this.loopTimer) clearTimeout(this.loopTimer);
+    if (this.auditionTimer) clearTimeout(this.auditionTimer);
     this.timer = undefined;
-    this.state = "stopped";
     this.callback({
       seconds: 0,
       total: this.plan?.total ?? 0,
@@ -169,13 +162,21 @@ export class Player {
       counting: false,
     });
   }
-  async audition(midi: number, instrument: string, volume: number) {
-    await this.init(instrument, volume);
-    this.synth?.triggerAttackRelease(Tone.Frequency(midi, "midi").toFrequency(), 0.55);
+  async audition(midi: number, program: number, volume: number) {
+    const generation = this.generation;
+    await this.init(program, volume);
+    if (generation !== this.generation) return;
+    this.synth?.programChange(0, program);
+    this.synth?.noteOn(0, midi, 90);
+    this.auditionTimer = setTimeout(() => this.synth?.noteOff(0, midi), 550);
   }
   dispose() {
     this.stop();
-    this.synth?.dispose();
-    this.click?.dispose();
+    this.synth?.destroy();
+    void this.context?.close();
+    this.context = undefined;
+    this.synth = undefined;
+    this.sequencer = undefined;
+    this.loading = undefined;
   }
 }
